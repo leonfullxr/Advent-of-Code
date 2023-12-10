@@ -99,4 +99,4 @@ for i, zone in enumerate(zones):
         if (x - 1) % 3 == 0 and (y - 1) % 3 == 0:
             zone_size[i] += 1
 
-print(zone_size)
+print('Part 2:', zone_size[1])
