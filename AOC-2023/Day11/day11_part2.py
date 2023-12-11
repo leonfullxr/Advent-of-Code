@@ -27,15 +27,13 @@ for row_index, (row_content, row_expanded) in enumerate(lines):
 
     ry_offset += EXPANSION_FACTOR if row_expanded else 1
 
+length_sum = 0
+for row_index in range(len(galaxies)):
+    for col_index in range(row_index + 1, len(galaxies)):
 
-def calculate_length_sum(galaxies):
-    length_sum = 0
-    for i in range(len(galaxies)):
-        for j in range(i + 1, len(galaxies)):
-            x1, y1 = galaxies[i]
-            x2, y2 = galaxies[j]
-            length_sum += abs(x1 - x2) + abs(y1 - y2)
-    return length_sum
+        length_sum += (abs(galaxies[row_index][0] - galaxies[col_index][0]) 
+                       + 
+                       abs(galaxies[row_index][1] - galaxies[col_index][1]))
 
 
-print("Part 2:", calculate_length_sum(galaxies))
+print("Part 2:", length_sum)
