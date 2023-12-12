@@ -1,14 +1,3 @@
-from itertools import product
-
-data = open("input.txt").read().strip().split("\n")
-
-springs_status = []
-springs_damaged = []
-
-for line in data:
-    springs_status.append(line.split(" ")[0])
-    springs_damaged.append(list(map(int, line.split(" ")[1].split(","))))
-    
 def valid_order(springs_status, springs_damaged):
     size = len(springs_status)
     damaged = []
@@ -28,32 +17,40 @@ def valid_order(springs_status, springs_damaged):
         i = j
     return damaged == springs_damaged
 
-def calculate_different_orders(springs_status, springs_damaged):
-    springs_status_int = []
-    unknown_springs = []
-    
-    for index, value in enumerate(springs_status):
-        if value == ".":
-            springs_status_int.append(0)
-        if value == "#":
-            springs_status_int.append(1)
-        if value == "?":
-            springs_status_int.append(-1)
-            unknown_springs.append(index)
+def generate_combinations(springs_status, springs_damaged, index, current_combination, count):
+    if index == len(springs_status):
+        if valid_order(current_combination, springs_damaged):
+            return count + 1
+        return count
 
-    count = 0
-    for combinations in product([0, 1], repeat=len(unknown_springs)):
-        possible_combination = springs_status_int.copy()
-        for i, bit in zip(unknown_springs, combinations):
-            possible_combination[i] = bit
-
-        if valid_order(possible_combination, springs_damaged):
-            count += 1
+    if springs_status[index] == "?":
+        # Try placing an operational spring
+        count = generate_combinations(springs_status, springs_damaged, index + 1, current_combination + [0], count)
+        # Try placing a broken spring
+        count = generate_combinations(springs_status, springs_damaged, index + 1, current_combination + [1], count)
+    else:
+        # If the current position is known, keep it as it is
+        count = generate_combinations(springs_status, springs_damaged, index + 1, current_combination + [int(springs_status[index] == "#")], count)
 
     return count
 
-total_combinations = 0
-for index in range(len(springs_status)):
-    total_combinations += calculate_different_orders(springs_status[index], springs_damaged[index])
-    
-print('Part 1:', total_combinations)
+def calculate_different_orders(springs_status, springs_damaged):
+    return generate_combinations(springs_status, springs_damaged, 0, [], 0)
+
+def main():
+    data = open("input.txt").read().strip().split("\n")
+    springs_status = []
+    springs_damaged = []
+
+    for line in data:
+        springs_status.append(line.split(" ")[0])
+        springs_damaged.append(list(map(int, line.split(" ")[1].split(","))))
+
+    total_combinations = 0
+    for index in range(len(springs_status)):
+        total_combinations += calculate_different_orders(springs_status[index], springs_damaged[index])
+
+    print('Part 1:', total_combinations)
+
+if __name__ == "__main__":
+    main()
