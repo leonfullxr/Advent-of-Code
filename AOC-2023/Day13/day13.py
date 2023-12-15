@@ -47,6 +47,7 @@ def main():
     result = 0
     for pattern in patterns:
         result += find_reflection(pattern)
+        print(pattern)
         
     print('Part 1', result)
     
