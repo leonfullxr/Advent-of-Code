@@ -10,7 +10,10 @@ def hash(s):
 
 def main():
     data = open("input.txt").read().strip().split(",")
-    print(sum(map(hash, data)))
+    total = 0
+    for part in data:
+        total += hash(part)
+    print(total)
 
 if __name__ == "__main__":
     main()
