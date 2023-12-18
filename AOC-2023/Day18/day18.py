@@ -1,16 +1,25 @@
 from collections import deque
-
-def point_inside(row, row_idx, path_points, offset) -> bool:    
-    intersections = 0
-    offset_x, offset_y = offset
+   
+def point_inside(x, y, path_points) -> bool:    
+    num = len(path_points)
+    j = num - 1
+    c = False
+    for i in range(num):
+        if (x == path_points[i][0]) and (y == path_points[i][1]):
+            # point is a corner
+            return True
+        if (path_points[i][1] > y) != (path_points[j][1] > y):
+            slope = (x - path_points[i][0]) * (path_points[j][1] - path_points[i][1]) - (
+                path_points[j][0] - path_points[i][0]
+            ) * (y - path_points[i][1])
+            if slope == 0:
+                # point is on boundary
+                return True
+            if (slope < 0) != (path_points[j][1] < path_points[i][1]):
+                c = not c
+        j = i
+    return c
     
-    for col_idx in range(len(row)):
-        if (row_idx-offset_x, col_idx-offset_y) in path_points:
-            intersections += 1
-            while (row_idx-offset_x, col_idx-offset_y) in path_points:
-                col_idx += 1
-                
-    return intersections % 2 == 1
     
 def construct_grid(path_points):
     path = deque()
@@ -57,15 +66,16 @@ def construct_grid(path_points):
         
     # Initialize the grid to '.'s
     grid = [['.' for _ in range(max_y + offset_y+1)] for _ in range(max_x + offset_x+1)]
-    
-    # Insert the points into the matrix
+    # sum offsets to points in path
+    path = [(x+offset_x, y+offset_y) for x, y in path]
+
     for row_idx in range(max_x + offset_x+1):
         for col_idx in range(max_y + offset_y+1):
-            if (row_idx - offset_x, col_idx - offset_y) in path:
+            if (row_idx, col_idx) in path:
                 grid[row_idx][col_idx] = '#'
-            elif point_inside(grid[row_idx], row_idx, path, (offset_x, offset_y)):
+            elif point_inside(row_idx, col_idx, path):
                 grid[row_idx][col_idx] = '#'
-    
+   
     return grid
 
 
@@ -81,10 +91,7 @@ def main():
         
     grid = construct_grid(path_points)
     
-    for _ in range(len(grid)):
-        print(grid[_])
-    
-    print('Part 1: ', sum([row.count('#') for row in grid]) - 2)
+    print('Part 1: ', sum([row.count('#') for row in grid]))
        
 if __name__ == '__main__':
     main()
