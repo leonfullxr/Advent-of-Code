@@ -1,5 +1,6 @@
 from collections import deque
 # https://en.wikipedia.org/wiki/Pick%27s_theorem
+# https://en.wikipedia.org/wiki/Shoelace_formula
 
 def get_boundary_points(path_points):
     current_x, current_y = 0, 0
@@ -16,10 +17,8 @@ def get_boundary_points(path_points):
             dx = -1
         elif direction == 'D':
             dx = 1
-        for _ in range(steps):
-            current_x += dx
-            current_y += dy
-            path.append((current_x, current_y))
+        current_x, current_y = current_x + dx * steps, current_y + dy * steps
+        path.append((current_x, current_y))
     return path
 
 def calculate_area(path_points):
@@ -31,15 +30,45 @@ def calculate_area(path_points):
         area += (x1 * y2) - (x2 * y1)
     return abs(area) // 2
 
+def parse_input():
+    path_points = deque()
+    color, steps, direction = [], None, None
+    data = [line.strip().split() for line in open("input.txt").readlines()]
+    num_boundary_points = 0
+    
+    for line in data:
+        color = line[2]
+        if color[-2] == '0':
+            direction = 'R'
+        elif color[-2] == '2':
+            direction = 'L'
+        elif color[-2] == '3':
+            direction = 'U'
+        elif color[-2] == '1':
+            direction = 'D'
+        steps = int(color[2:-2],16)
+        path_points.append((direction, steps))
+        num_boundary_points += steps
+    return path_points, num_boundary_points
+
 def main():
     data = [line.strip().split() for line in open("input.txt").readlines()]
     path_points = deque([(d[0], d[1]) for d in data])
+    num_boundary_points = sum([int(d[1]) for d in data])
 
     boundary_points = get_boundary_points(path_points)
     area = calculate_area(boundary_points)
-    num_points = len(boundary_points)
+    num_points = num_boundary_points
     number_inner_points = area - num_points // 2 + 1
-    print(number_inner_points + num_points)
+    print('Part 1', number_inner_points + num_points)
+    
+    path_points, num_boundary_points = parse_input()
+    
+    boundary_points = get_boundary_points(path_points)
+    area = calculate_area(boundary_points)
+    num_points = num_boundary_points
+    number_inner_points = area - num_points // 2 + 1
+    print('Part 2', number_inner_points + num_points)
 
 if __name__ == '__main__':
     main()
