@@ -51,24 +51,23 @@ def parse_input():
         num_boundary_points += steps
     return path_points, num_boundary_points
 
+def get_inner_points(path_points, num_boundary_points):
+    boundary_points = get_boundary_points(path_points)
+    area = calculate_area(boundary_points)
+    num_points = num_boundary_points
+    number_inner_points = area - num_points // 2 + 1
+    return number_inner_points + num_points
+
 def main():
     data = [line.strip().split() for line in open("input.txt").readlines()]
     path_points = deque([(d[0], d[1]) for d in data])
     num_boundary_points = sum([int(d[1]) for d in data])
 
-    boundary_points = get_boundary_points(path_points)
-    area = calculate_area(boundary_points)
-    num_points = num_boundary_points
-    number_inner_points = area - num_points // 2 + 1
-    print('Part 1', number_inner_points + num_points)
+    print('Part 1', get_inner_points(path_points, num_boundary_points))
     
     path_points, num_boundary_points = parse_input()
     
-    boundary_points = get_boundary_points(path_points)
-    area = calculate_area(boundary_points)
-    num_points = num_boundary_points
-    number_inner_points = area - num_points // 2 + 1
-    print('Part 2', number_inner_points + num_points)
+    print('Part 2', get_inner_points(path_points, num_boundary_points))
 
 if __name__ == '__main__':
     main()
