@@ -26,42 +26,25 @@ def parse_input():
             workflow[name][0].append((key, comparator, number, target))
     return workflow, parts
 
-def accept_item(item, name = "in", workflow = {}):
-    if name == "R":
-        return False
-    if name == "A":
-        return True
+def accept_item(item, name, workflow):
+    if name in ["R", "A"]:
+        return name == "A"
     
     rules, rec = workflow[name]
+    item_values = {'x': item[0], 'm': item[1], 'a': item[2], 's': item[3]}
     
     for key, comparator, number, target in rules:
-        value = None
-        if key == "x":
-            value = item[0]
-        elif key == "m":
-            value = item[1]
-        elif key == "a":
-            value = item[2]
-        elif key == "s":
-            value = item[3]
-        if comparator == "<":
-            if value < number:
-                return accept_item(item, target, workflow)
-        elif comparator == ">":
-            if value > number:
-                return accept_item(item, target, workflow)
-    
+        value = item_values[key]
+        if (comparator == "<" and value < number) or (comparator == ">" and value > number):
+            return accept_item(item, target, workflow)
+
     return accept_item(item, rec, workflow)
 
 def main():
     workflow, parts = parse_input()
     
-    total = 0
-    for item in parts:
-        if accept_item(item, "in", workflow):
-            total += sum(item)
-            
+    total = sum(sum(item) for item in parts if accept_item(item, "in", workflow))
     print(total)
-    
+
 if __name__ == '__main__':
     main()
