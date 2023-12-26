@@ -63,24 +63,53 @@ class State:
     critical: Set[Block] = field(default_factory=set)
     belows: dict[Block, Set[Block]] = field(default_factory=dict)
     tops: dict[Block, int] = field(default_factory=dict)
+    blocks_supporting: dict[Block, set[Block]] = field(default_factory=dict)
+    blocks_supporting_this_block: dict[Block, set[Block]] = field(default_factory=dict)
+    falls: dict[Block, int] = field(default_factory=dict)
+    
+    def count_all_falls(self):
+        return sum(self.count_falls(block) - 1 for block in self.critical)
+    
+    def count_falls(self, block: Block):
+        fallen = {block}
+        to_fall = [block]
+        to_fall.extend(self.blocks_supporting[block])
+        while len(to_fall) != 0:
+            falling = to_fall.pop(0)
+            if len(self.blocks_supporting_this_block[falling].difference(fallen)) == 0:
+                fallen.add(falling)
+                to_fall.extend(self.blocks_supporting[falling] - fallen)
+        return len(fallen)
 
-    def count_disintegratable(self) -> int:
-        """Count the number of blocks that can be disintegrated."""
+    def count_disintegratable(self):
         for block in self.blocks:
+            if block not in self.blocks_supporting:
+                self.blocks_supporting[block] = set()
+                self.blocks_supporting_this_block[block] = set()
             blocks_below = self.below(block)
             if len(blocks_below) == 0:
+                self.blocks_supporting_this_block[block] = blocks_below
                 continue
             elif len(blocks_below) == 1:
                 self.critical.update(blocks_below)
+                self.blocks_supporting_this_block[block] = blocks_below
+                for below in blocks_below:
+                    if below not in self.blocks_supporting:
+                        self.blocks_supporting[below] = set()
+                    self.blocks_supporting[below].add(block)
             else:
                 max_top = max(self.top(block) for block in blocks_below)
                 directly_below = {block for block in blocks_below if self.top(block) == max_top}
                 if len(directly_below) == 1:
                     self.critical.update(directly_below)
+                self.blocks_supporting_this_block[block] = directly_below
+                for below in directly_below:
+                    if below not in self.blocks_supporting:
+                        self.blocks_supporting[below] = set()
+                    self.blocks_supporting[below].add(block)
         return len(self.blocks.difference(self.critical))
 
-    def below(self, block: Block) -> Set[Block]:
-        """Get the blocks that are below a given block."""
+    def below(self, block: Block):
         if block in self.belows:
             return self.belows[block]
         self.belows[block] = set()
@@ -90,8 +119,7 @@ class State:
                     self.belows[block].add(self.cells[Vec3(cell.x, cell.y, z)])
         return self.belows[block]
 
-    def top(self, block: Block) -> int:
-        """Calculate the top height of a stack of blocks."""
+    def top(self, block: Block):
         if block in self.tops:
             return self.tops[block]
         if len(self.below(block)) == 0:
@@ -124,7 +152,8 @@ def every_line(state: State) -> State:
 def main():
     state = State()
     every_line(state)
-    print("Input:", state.count_disintegratable())
+    print("Part 1:", state.count_disintegratable())
+    print("Part 2:", state.count_all_falls())
 
 if __name__ == '__main__':
     main()
