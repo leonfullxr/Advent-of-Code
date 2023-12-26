@@ -2,9 +2,6 @@ from enum import Enum
 from collections import deque
 from math import gcd
 
-file = open("./input.txt").readlines()
-
-
 class ModuleType(Enum):
     FLIP_FLOP = "%"
     CONJUCTION = "&"
@@ -45,73 +42,81 @@ class Module:
             + "}"
         )
 
+def parse_input():
+    modules = {}
+    rx_feeder = ""
 
-modules = {}
-rx_feeder = ""
+    for line in open("input.txt").readlines():
+        module = Module(line)
 
-for line in file:
-    module = Module(line)
+        modules[module.name] = module
 
-    modules[module.name] = module
+        if "rx" in module.destinations:
+            rx_feeder = module.name
 
-    if "rx" in module.destinations:
-        rx_feeder = module.name
+    for name, module in modules.items():
+        for destination in module.destinations:
+            if (
+                destination in modules
+                and modules[destination].type == ModuleType.CONJUCTION
+            ):
+                modules[destination].memory[name] = PulseType.LOW
+    return modules, rx_feeder
 
-for name, module in modules.items():
-    for destination in module.destinations:
-        if (
-            destination in modules
-            and modules[destination].type == ModuleType.CONJUCTION
-        ):
-            modules[destination].memory[name] = PulseType.LOW
+def calculate_pulses(modules, rx_feeder):
+    lengths = {}
+    visited = {
+        name: 0 for name, module in modules.items() if rx_feeder in module.destinations
+    }
+    count = 0
 
-lengths = {}
-visited = {
-    name: 0 for name, module in modules.items() if rx_feeder in module.destinations
-}
-count = 0
+    while True:
+        count += 1
+        queue = deque(
+            [("broadcaster", x, PulseType.LOW) for x in modules["broadcaster"].destinations]
+        )
 
-while True:
-    count += 1
-    queue = deque(
-        [("broadcaster", x, PulseType.LOW) for x in modules["broadcaster"].destinations]
-    )
+        while queue:
+            source, destination, pulse = queue.popleft()
 
-    while queue:
-        source, destination, pulse = queue.popleft()
+            if destination not in modules:
+                continue
 
-        if destination not in modules:
-            continue
+            module = modules[destination]
 
-        module = modules[destination]
+            if module.name == rx_feeder and pulse == PulseType.HIGH:
+                visited[source] += 1
 
-        if module.name == rx_feeder and pulse == PulseType.HIGH:
-            visited[source] += 1
+                if source not in lengths:
+                    lengths[source] = count
 
-            if source not in lengths:
-                lengths[source] = count
+                if all(visited.values()):
+                    product = 1
+                    for length in lengths.values():
+                        product = product * length // gcd(product, length)
+                    return product
 
-            if all(visited.values()):
-                product = 1
-                for length in lengths.values():
-                    product = product * length // gcd(product, length)
-                print(product)
-                exit(0)
+            if module.type == ModuleType.FLIP_FLOP:
+                if pulse == PulseType.LOW:
+                    module.memory = module.memory == False
+                    outgoing_pulse = PulseType.HIGH if module.memory else PulseType.LOW
+                    for dest in module.destinations:
+                        queue.append((module.name, dest, outgoing_pulse))
 
-        if module.type == ModuleType.FLIP_FLOP:
-            if pulse == PulseType.LOW:
-                module.memory = module.memory == False
-                outgoing_pulse = PulseType.HIGH if module.memory else PulseType.LOW
+            else:
+                module.memory[source] = pulse
+                outgoing_pulse = (
+                    PulseType.LOW
+                    if all(pulse == PulseType.HIGH for pulse in module.memory.values())
+                    else PulseType.HIGH
+                )
                 for dest in module.destinations:
                     queue.append((module.name, dest, outgoing_pulse))
-
-        else:
-            module.memory[source] = pulse
-            outgoing_pulse = (
-                PulseType.LOW
-                if all(pulse == PulseType.HIGH for pulse in module.memory.values())
-                else PulseType.HIGH
-            )
-            for dest in module.destinations:
-                queue.append((module.name, dest, outgoing_pulse))
                 
+def main():
+    modules, rx_feeder = parse_input() 
+    
+    print('Part 2', calculate_pulses(modules, rx_feeder))
+
+if __name__ == "__main__":
+    main()
