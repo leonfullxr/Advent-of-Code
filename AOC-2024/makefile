@@ -1,5 +1,5 @@
 # Directories to manage
-DAYS := $(shell seq -w 1 25 | sed 's/^/Day/')
+DAYS := $(shell seq -w 1 25 | sed 's/^/day/')
 
 # Default target
 .PHONY: all
@@ -9,8 +9,8 @@ all:
 	@echo "  make <day_number>   - Create a new day folder with input.txt and dayXX.cpp"
 	@echo "  make dayXX          - Compile and run dayXX.cpp"
 	@echo "Example:"
-	@echo "  make 05             - Create Day05 with template files"
-	@echo "  make day05          - Compile and execute Day05/day05.cpp"
+	@echo "  make 02             - Create day02 with template files"
+	@echo "  make day02          - Compile and execute day02/day02.cpp"
 
 # Clean .exe and .o files in all day directories
 .PHONY: clean
@@ -20,9 +20,10 @@ clean:
 	@echo "Cleanup complete!"
 
 # Rule to create a new day directory with template files
+.PHONY: %
 %:
 	@if echo $@ | grep -Eq '^[0-9]{2}$$'; then \
-		day_dir="Day$@"; \
+		day_dir="day$@"; \
 		day_file="day$@.cpp"; \
 		if [ ! -d $$day_dir ]; then \
 			mkdir -p $$day_dir; \
@@ -41,19 +42,21 @@ clean:
 			echo "Creating $$day_dir/$$day_file"; \
 		fi; \
 	else \
-		echo "Invalid target. Use a two-digit day number (e.g., 05)."; \
+		echo "Invalid target. Use a two-digit day number (e.g., 02)."; \
 	fi
 
 # Rule to compile and run dayXX.cpp
+.PHONY: day%
 day%:
 	@if echo $@ | grep -Eq '^day[0-9]{2}$$'; then \
-		day_dir="Day$${@#day}"; \
-		day_file="$${@}.cpp"; \
-		if [ -f $$day_dir/$$day_file ]; then \
-			g++ -o $$day_dir/$$@ $$day_dir/$$day_file && $$day_dir/$$@; \
+		day_dir="$@"; \
+		day_file="$$day_dir/$@.cpp"; \
+		if [ -f $$day_file ]; then \
+			echo "Compiling $$day_file..."; \
+			g++ -o $$day_dir/$@ $$day_file && echo "Running $$day_dir/$@..." && $$day_dir/$@; \
 		else \
-			echo "Error: $$day_dir/$$day_file not found."; \
+			echo "Error: $$day_file not found."; \
 		fi; \
 	else \
-		echo "Invalid target. Use dayXX format (e.g., day05)."; \
+		echo "Invalid target. Use dayXX format (e.g., day02)."; \
 	fi
