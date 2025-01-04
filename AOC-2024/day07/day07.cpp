@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
+#include <string>
 
 std::unordered_map<long int, std::vector<int>> parse_input(const std::string& filename) {
     std::ifstream infile(filename);
@@ -15,19 +16,18 @@ std::unordered_map<long int, std::vector<int>> parse_input(const std::string& fi
     }
 
     std::string line;
-    while (std::getline(infile, line)) { // Read line by line
+    while (std::getline(infile, line)) {
         std::istringstream iss(line);
         std::vector<int> row;
         long int num, key;
 
-        // Find the key
         iss >> key;
         iss.ignore(1);
 
-        while (iss >> num) { // Extract integers from the line
+        while (iss >> num) {
             row.push_back(num);
         }
-        if (!row.empty()) { // Add non-empty rows to the data
+        if (!row.empty()) {
             if (data.find(key) != data.end()) {
                 std::cerr << "Error: Duplicate key " << key << std::endl;
                 return data;
@@ -39,46 +39,53 @@ std::unordered_map<long int, std::vector<int>> parse_input(const std::string& fi
     return data;
 }
 
-bool evaluate_combination(const std::vector<char>& combination, const std::vector<int>& data, long int key) {
-    long int sum = data[0];
-    for (int index = 0; index < combination.size(); index++) {
-        if (combination[index] == '+') {
-            sum += data[index+1];
-        } else if (combination[index] == '*'){
-            sum *= data[index+1];
-        } else {
-            std::cerr << "Error: Invalid combination" << std::endl;
-            return -1;
+bool evaluate_combination(const std::vector<char>& combination, const std::vector<int>& numbers, long int target) {
+    long int result = numbers[0];
+    for (size_t i = 0; i < combination.size(); ++i) {
+        if (combination[i] == '+') {
+            result += numbers[i + 1];
+        } else if (combination[i] == '*') {
+            result *= numbers[i + 1];
+        } else if (combination[i] == '|') {
+            std::string concatenated = std::to_string(result) + std::to_string(numbers[i + 1]);
+            result = std::stol(concatenated);
         }
     }
-    return key == sum;
+    return result == target;
 }
 
-long int possible_combinations(std::vector<int> data, long int key) {
-    long int total = 0;
-    int total_combinations = pow(2, data.size()-1);
-    std::vector<std::vector<char>> combinations;
+long int possible_combinations(const std::vector<int>& numbers, long int target, bool include_concatenation) {
+    int num_operators = numbers.size() - 1;
+    long int total_combinations = pow(include_concatenation ? 3 : 2, num_operators);
 
-    for (int combination_index = 0; combination_index < total_combinations; combination_index++) {
-        std::vector<char> combination;
-        for (int index = 0; index < data.size()-1; index++) {
-            if (combination_index & (1 << index)) {
-                combination.push_back('+');
-            } else {
-                combination.push_back('*');
+    for (long int i = 0; i < total_combinations; ++i) {
+        std::vector<char> operators;
+        long int temp = i;
+        for (int j = 0; j < num_operators; ++j) {
+            int op = temp % (include_concatenation ? 3 : 2);
+            temp /= (include_concatenation ? 3 : 2);
+            if (op == 0) {
+                operators.push_back('+');
+            } else if (op == 1) {
+                operators.push_back('*');
+            } else if (op == 2) {
+                operators.push_back('|');
             }
         }
-        if (evaluate_combination(combination, data, key)) return key;
+
+        if (evaluate_combination(operators, numbers, target)) {
+            return target;
+        }
     }
 
-    return total;
+    return 0;
 }
 
-long int total_calibrations(std::unordered_map<long int, std::vector<int>> data) {
-    long int total = 0;
+long long int total_calibrations(const std::unordered_map<long int, std::vector<int>>& data, bool include_concatenation) {
+    long long int total = 0;
 
     for (const auto& [key, value] : data) {
-        total += possible_combinations(value, key);
+        total += possible_combinations(value, key, include_concatenation);
     }
 
     return total;
@@ -87,16 +94,11 @@ long int total_calibrations(std::unordered_map<long int, std::vector<int>> data)
 int main() {
     std::unordered_map<long int, std::vector<int>> data = parse_input("input.txt");
 
-    // Print the data
-    // for (const auto& [key, value] : data) {
-    //     std::cout << key << ": ";
-    //     for (const auto& num : value) {
-    //         std::cout << num << " ";
-    //     }
-    //     std::cout << std::endl;
-    // }
+    long long int total_part1 = total_calibrations(data, false);
+    long long int total_part2 = total_calibrations(data, true);
 
-    long int total = total_calibrations(data);
-    std::cout << "Day07 solution " << total << std::endl;
+    std::cout << "Day07 solution part 1: " << total_part1 << std::endl;
+    std::cout << "Day07 solution part 2: " << total_part2 << std::endl;
+
     return 0;
 }
