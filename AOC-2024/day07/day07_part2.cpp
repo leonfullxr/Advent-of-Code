@@ -97,6 +97,6 @@ int main() {
     std::unordered_map<long int, std::vector<int>> data = parse_input("input.txt");
 
     long long int total = total_calibrations(data);
-    std::cout << "Day07 solution part 1 " << total << std::endl;
+    std::cout << "Day07 solution part 2" << total << std::endl;
     return 0;
 }
